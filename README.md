@@ -1,27 +1,20 @@
-# Mini Knowledge Agent — "Ask or Search?"
+# Personal Memory Agent
 
 A minimal AI agent implementation for learning purposes. No frameworks, no magic — just pure Python showing what's under the hood of tools like LangChain, ADK, Koog, etc.
+
+The agent combines LLM's general knowledge with your personal documents (travel journal). It decides when to answer directly vs. when to search your private data.
 
 ## What This Project Teaches
 
 This is **Lesson 1** in understanding AI agents. It demonstrates the core **Agent Loop** pattern:
 
-```
-User Question
-     ↓
-┌─────────────┐
-│   Router    │  ← LLM decides: use tool or answer directly?
-└─────────────┘
-     ↓
-┌─────────────┐
-│    Tool     │  ← search_docs(query) — naive keyword search
-└─────────────┘
-     ↓
-┌─────────────┐
-│  Answerer   │  ← LLM generates final answer using tool output
-└─────────────┘
-     ↓
-   Response
+```mermaid
+flowchart TD
+    A[User Question] --> B{Router LLM}
+    B -->|NO_SEARCH| D[Return LLM Answer]
+    B -->|SEARCH_DOCS| C[search_docs tool]
+    C --> E[Answerer LLM]
+    E --> F[Response with sources]
 ```
 
 ## How It Works
@@ -126,8 +119,6 @@ This is a **learning project**, intentionally simple:
 - ❌ Single tool only (real agents have multiple tools)
 - ❌ No streaming (waits for full response)
 - ❌ No retry logic (fails on first API error)
-
-These are great topics for **Lesson 2, 3, 4...**
 
 ## License
 
