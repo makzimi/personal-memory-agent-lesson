@@ -1,5 +1,6 @@
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 import requests
 
@@ -92,7 +93,39 @@ def chat(messages: list[dict], config: dict) -> str:
 
 
 # ----------------------------
-# Manual Agent Loop (Ask or Search?)
+# Router Decision Structure
+# ----------------------------
+
+@dataclass
+class RouterDecision:
+    action: str          # "SEARCH_DOCS" or "NO_SEARCH"
+    query: str | None    # Search query (if action is SEARCH_DOCS)
+    answer: str | None   # Direct answer (if action is NO_SEARCH)
+
+
+def parse_router_response(raw: str) -> RouterDecision:
+    """
+    Extracts JSON from LLM response and returns a typed RouterDecision.
+    Raises ValueError if parsing fails.
+    """
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        raise ValueError(f"No JSON found in response:\n{raw}")
+
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON: {e}\nRaw output:\n{raw}")
+
+    return RouterDecision(
+        action=data.get("action", ""),
+        query=data.get("query"),
+        answer=data.get("answer"),
+    )
+
+
+# ----------------------------
+# Agent Prompts
 # ----------------------------
 
 ROUTER_SYSTEM_PROMPT = """
@@ -139,42 +172,39 @@ Rules:
 """
 
 def agent_once(user_text: str, chunks: list[dict], config: dict) -> str:
-    # Step 1: Ask LLM whether to search or not
+    # Step 1: Ask router LLM to decide
     router_messages = [
         {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
         {"role": "user", "content": user_text},
     ]
     router_out = chat(router_messages, config)
 
-    # Make it robust for live demo (try to extract JSON)
-    match = re.search(r"\{.*\}", router_out, re.DOTALL)
-    if not match:
-        return f"(Router error) Model did not return JSON:\n{router_out}"
-
+    # Step 2: Parse into typed structure
     try:
-        decision = json.loads(match.group(0))
-    except json.JSONDecodeError as e:
-        return f"(Router error) Invalid JSON in response: {e}\nRaw output:\n{router_out}"
+        decision = parse_router_response(router_out)
+    except ValueError as e:
+        return f"(Router error) {e}"
 
-    print(f"[router decision] {decision}")
+    print(f"[router decision] action={decision.action}")
 
-    if decision.get("action") == "NO_SEARCH":
-        return decision.get("answer", "(no answer)")
+    # Step 3: Handle based on action
+    if decision.action == "NO_SEARCH":
+        return decision.answer or "(no answer)"
 
-    if decision.get("action") == "SEARCH_DOCS":
-        query = decision.get("query", user_text)
+    if decision.action == "SEARCH_DOCS":
+        query = decision.query or user_text
         tool_result = search_docs(query, chunks=chunks, top_k=3)
         print(f"[tool call] search_docs(query={query!r})")
         print(f"[tool result]\n{tool_result}\n")
 
-        # Step 2: Ask LLM to answer using tool output
+        # Step 4: Generate answer using tool results
         answer_messages = [
             {"role": "system", "content": ANSWER_SYSTEM_PROMPT},
             {"role": "user", "content": f"Question: {user_text}\n\nRetrieved:\n{tool_result}"},
         ]
         return chat(answer_messages, config)
 
-    return f"(Router error) Unknown action: {decision}"
+    return f"(Router error) Unknown action: {decision.action}"
 
 
 def main():

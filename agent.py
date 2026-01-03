@@ -1,5 +1,6 @@
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path
 import requests
 
@@ -92,7 +93,39 @@ def chat(messages: list[dict], config: dict) -> str:
 
 
 # ----------------------------
-# Manual Agent Loop (Ask or Search?)
+# Router Decision Structure
+# ----------------------------
+
+@dataclass
+class RouterDecision:
+    action: str          # "SEARCH_DOCS" or "NO_SEARCH"
+    query: str | None    # Search query (if action is SEARCH_DOCS)
+    answer: str | None   # Direct answer (if action is NO_SEARCH)
+
+
+def parse_router_response(raw: str) -> RouterDecision:
+    """
+    Extracts JSON from LLM response and returns a typed RouterDecision.
+    Raises ValueError if parsing fails.
+    """
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        raise ValueError(f"No JSON found in response:\n{raw}")
+
+    try:
+        data = json.loads(match.group(0))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON: {e}\nRaw output:\n{raw}")
+
+    return RouterDecision(
+        action=data.get("action", ""),
+        query=data.get("query"),
+        answer=data.get("answer"),
+    )
+
+
+# ----------------------------
+# Agent Prompts
 # ----------------------------
 
 ROUTER_SYSTEM_PROMPT = """
