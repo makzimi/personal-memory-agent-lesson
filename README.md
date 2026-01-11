@@ -4,64 +4,99 @@ A minimal AI agent implementation for learning purposes. No frameworks, no magic
 
 The agent combines LLM's general knowledge with your personal documents (travel journal). It decides when to answer directly vs. when to search your private data.
 
-## What This Project Teaches
+---
 
-This is **Lesson 1** in understanding AI agents. It demonstrates the core **Agent Loop** pattern:
+## 🚀 Quick Start
 
-```mermaid
-flowchart TD
-    A[User Question] --> B{Router LLM}
-    B -->|NO_SEARCH| D[Return LLM Answer]
-    B -->|SEARCH_DOCS| C[search_docs tool]
-    C --> E[Answerer LLM]
-    E --> F[Response with sources]
+### Prerequisites
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+#### 1. Install Homebrew (if not installed)
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-## How It Works
-
-1. **User asks a question**
-2. **Router LLM decides:**
-   - `SEARCH_DOCS` → search the knowledge base
-   - `NO_SEARCH` → answer from general knowledge
-3. **If searching:** run naive keyword search over `docs/` folder
-4. **Answerer LLM** generates response using retrieved context
-
-## Project Structure
-
-```
-.
-├── agent.py              # Starter template (we'll build this together!)
-├── finished/
-│   └── agent.py          # Complete solution (peek here if stuck)
-├── config.json           # Your API credentials (create from template)
-├── config.example.json   # Template for config
-├── requirements.txt      # Python dependencies
-├── docs/
-│   └── travel_journal.txt   # Sample knowledge base
-└── README.md
+#### 2. Install Python 3.10+
+```bash
+brew install python@3.13
 ```
 
-> **Workshop note:** The main `agent.py` has the core function `agent_once()` as a stub. 
-> During the session, we'll implement it step by step. 
-> The complete working version is in `finished/agent.py` — use it as a reference anytime!
+#### 3. Install uv (fast Python package manager)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-## Quick Start
+</details>
 
-### 1. Install dependencies
+<details>
+<summary><strong>Windows</strong></summary>
+
+#### 1. Install Python 3.10+
+Download and install from [python.org](https://www.python.org/downloads/)
+
+> ✅ During installation, check **"Add Python to PATH"**
+
+#### 2. Install uv (fast Python package manager)
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+</details>
+
+<details>
+<summary><strong>Linux</strong></summary>
+
+#### 1. Install Python 3.10+ (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+```
+
+#### 2. Install uv (fast Python package manager)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+</details>
+
+---
+
+### Setup (using uv)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package manager written in Rust. It's 10-100x faster than pip.
+
+#### Step 1: Create and activate virtual environment
 
 ```bash
-pip install -r requirements.txt
+# Navigate to project folder
+cd ai-agent-lesson-1
+
+# Create virtual environment
+uv venv .venv
+
+# Activate it
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate      # Windows
 ```
 
-### 2. Configure API credentials
+> ✅ You should see `(.venv)` at the beginning of your terminal prompt
 
-Copy the example config and add your API key:
+#### Step 2: Install dependencies
 
 ```bash
-cp config.example.json config.json
+uv pip install -r requirements.txt
 ```
 
-Edit `config.json`:
+#### Step 3: Configure API credentials
+
+```bash
+cp config.example.json config.json   # macOS/Linux
+copy config.example.json config.json # Windows
+```
+
+Edit `config.json` and add your API key:
 
 ```json
 {
@@ -71,9 +106,63 @@ Edit `config.json`:
 }
 ```
 
-Works with any OpenAI-compatible API (OpenAI, OpenRouter, Ollama, etc.)
+**Where to get an API key:**
+- **OpenAI:** https://platform.openai.com/api-keys
+- **OpenRouter** (free models available): https://openrouter.ai/keys
 
-### 3. Run the agent
+> 💡 Works with any OpenAI-compatible API (OpenAI, OpenRouter, Ollama, etc.)
+
+---
+
+<details>
+<summary><strong>📦 Setup without uv (using pip)</strong></summary>
+
+If you prefer using the standard Python tools instead of uv:
+
+#### Step 1: Create and activate virtual environment
+
+```bash
+# Navigate to project folder
+cd ai-agent-lesson-1
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate it
+source .venv/bin/activate   # macOS/Linux
+.venv\Scripts\activate      # Windows
+```
+
+> ✅ You should see `(.venv)` at the beginning of your terminal prompt
+
+#### Step 2: Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### Step 3: Configure API credentials
+
+```bash
+cp config.example.json config.json   # macOS/Linux
+copy config.example.json config.json # Windows
+```
+
+Edit `config.json` and add your API key:
+
+```json
+{
+  "api_key": "your-api-key-here",
+  "base_url": "https://api.openai.com/v1",
+  "model": "gpt-4o-mini"
+}
+```
+
+</details>
+
+---
+
+### Run the Agent
 
 ```bash
 python agent.py
@@ -120,6 +209,8 @@ This is a **learning project**, intentionally simple:
 - ❌ No streaming (waits for full response)
 - ❌ No retry logic (fails on first API error)
 
-## License
+---
+
+## 📝 License
 
 MIT — use freely for learning!
